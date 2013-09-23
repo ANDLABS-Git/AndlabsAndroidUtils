@@ -3,6 +3,7 @@ AndroidUtils
 
 Logging:
 Log simple strings or formatted strings in one simple call:
+
         final String formattedTestString = "first argument = %s, second argument = %s";
         final String firstArgument = "abc";
         final Object secondArgument = new  Object() {
