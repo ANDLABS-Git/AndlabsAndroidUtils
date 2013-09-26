@@ -164,7 +164,7 @@ public class AdUtils {
      * Request an interstitial ad from a random provider
      */
     public void requestInterstitial() {
-        requestInterstitial(MMEDIA);
+        requestInterstitial(ALL);
     }
 
 
