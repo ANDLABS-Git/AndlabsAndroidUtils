@@ -2,6 +2,7 @@ package com.andlabs.androidutils.samples;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 
 import com.andlabs.androidutils.logging.L;
@@ -20,8 +21,9 @@ public class TestActivity extends Activity {
         final Object secondArgument = new  Object() {
             public String toString() {
                 return "123";
-            };
+            }
         };
+        
         
         L.d(formattedTestString, firstArgument, secondArgument);
     }
