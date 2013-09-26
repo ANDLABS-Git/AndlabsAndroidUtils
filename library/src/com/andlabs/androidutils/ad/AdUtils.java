@@ -8,7 +8,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.adsdk.sdk.Ad;
 import com.adsdk.sdk.AdListener;
@@ -57,7 +56,7 @@ public class AdUtils {
 
     private static final String CHARTBOOST_SIGNATURE = "";
 
-    
+
     private static final int AD_NOT_INITIALIZED = 0;
 
     private static final int AD_INTERSTITIAL = 1;
@@ -65,27 +64,27 @@ public class AdUtils {
     private static final int AD_BANNER = 2;
 
     private static final int FULL_SCREEN_DISTANCE = 2;
-    
+
 
     private Activity mActivity;
 
 
     private int mFullscreenCounter = -1;
-    
-    
+
+
     // Ad manager
 
     private AdManager mMobFoxManager;
 
     private RevMob mRevMobManager;
-    
+
     private RevMobFullscreen mRevMobFullscreen;
 
     private MMInterstitial mMMediaManager;
 
     private Chartboost mChartboostManager;
 
-    
+
     @SuppressLint("UseSparseArrays")
     private Map<Integer, Boolean> mLoadedAds = new HashMap<Integer, Boolean>();
 
@@ -109,14 +108,15 @@ public class AdUtils {
         mRevMobManager = RevMob.start(activity);
         // Init MobFox
         mMobFoxManager = new AdManager(activity, MOBFOX_REQUEST_URL, MOBFOX_PUBLISHER_ID, false);
-        
+
         // Millenial Media
         mMMediaManager = new MMInterstitial(activity);
         mMMediaManager.setApid(MMEDIA_APP_ID);
-        
+
         // Chartboost
         mChartboostManager = Chartboost.sharedChartboost();
         mChartboostManager.onCreate(activity, CHARTBOOST_APP_ID, CHARTBOOST_SIGNATURE, mChartboostListener);
+        mChartboostManager.onStart(activity);
 
         // Init all ads as not loaded
         mLoadedAds.put(MOBFOX, false);
@@ -145,14 +145,10 @@ public class AdUtils {
 
     private boolean initializeAdType(SharedPreferences prefs) {
         if (Math.random() < 1) {
-            Log.d("AdUtils", "interstitial");
-
             L.d("initialized interstitial");
             prefs.edit().putInt(AD_TYPE, AD_INTERSTITIAL).commit();
             return true;
         } else {
-            Log.d("AdUtils", "banner");
-
             L.d("initialized banner");
             prefs.edit().putInt(AD_TYPE, AD_BANNER).commit();
             return false;
@@ -161,7 +157,7 @@ public class AdUtils {
 
 
     /**
-     * Request an interstitial ad from a random provider
+     * Request an interstitial ad from a random provider. Calling this method for the first time initiates ad caching.
      */
     public void requestInterstitial() {
         requestInterstitial(ALL);
@@ -169,7 +165,7 @@ public class AdUtils {
 
 
     /**
-     * Request an interstitial ad
+     * Request an interstitial ad. Calling this method for the first time initiates ad caching.
      * 
      * @param provider
      */
@@ -253,7 +249,7 @@ public class AdUtils {
     private void showFullscreen(int requestedProvider) {
         if (isFullscreenAllowed(requestedProvider)) {
 
-            final int loadedProvider = getFirstLoadedProvider();
+            final int loadedProvider = getFirstLoadedProvider(requestedProvider);
 
             switch (loadedProvider) {
                 case MOBFOX:
@@ -287,13 +283,19 @@ public class AdUtils {
     }
 
 
-    private int getFirstLoadedProvider() {
-        final Collection<Boolean> values = mLoadedAds.values();
-        int i = 0;
-        for (Boolean loaded : values) {
-            i++;
-            if (loaded) {
-                return i;
+    private int getFirstLoadedProvider(int provider) {
+        if (provider == ALL) { // all providers, go over the list of loaded ads
+            final Collection<Boolean> values = mLoadedAds.values();
+            int i = 0;
+            for (Boolean loaded : values) {
+                i++;
+                if (loaded) {
+                    return i;
+                }
+            }
+        } else { // one selected provider, check if already loaded
+            if(mLoadedAds.get(provider)) {
+                return provider;
             }
         }
         return -1;
