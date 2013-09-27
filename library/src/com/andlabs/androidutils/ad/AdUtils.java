@@ -182,22 +182,24 @@ public class AdUtils {
 
 
     private void setMetaData(Bundle metaData) {
-        // Ad provider meta data
-        // mobfox publisher id
-        mMobfoxPublisherId = metaData.getString(MOBFOX_PUBLISHER_ID);
+        if (metaData != null) {
+            // Ad provider meta data
+            // mobfox publisher id
+            mMobfoxPublisherId = metaData.getString(MOBFOX_PUBLISHER_ID);
 
-        // mmedia app id
-        mMediaAppId = metaData.getString(MMEDIA_APP_ID);
+            // mmedia app id
+            mMediaAppId = metaData.getString(MMEDIA_APP_ID);
 
-        // chartboost app id
-        mChartboostAppid = metaData.getString(CHARTBOOST_APP_ID);
+            // chartboost app id
+            mChartboostAppid = metaData.getString(CHARTBOOST_APP_ID);
 
-        // chartboost signature
-        mChartboostAppSignature = metaData.getString(CHARTBOOST_SIGNATURE);
+            // chartboost signature
+            mChartboostAppSignature = metaData.getString(CHARTBOOST_SIGNATURE);
 
-        // Config meta data
-        // full screen distance
-        mFullscreenDistance = metaData.getInt(FULLSCREEN_DISTANCE);
+            // Config meta data
+            // full screen distance
+            mFullscreenDistance = metaData.getInt(FULLSCREEN_DISTANCE);
+        }
     }
 
 
