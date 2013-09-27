@@ -121,6 +121,10 @@ public class AdUtils {
 
     private AdUtils(Activity activity) {
 
+        if(activity == null) {
+            throw new NullPointerException("Activity must not be null");
+        }
+        
         mActivity = activity;
 
         // Init the manifest's meta data
