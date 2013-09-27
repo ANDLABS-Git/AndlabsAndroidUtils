@@ -60,6 +60,33 @@
         <meta-data
             android:name="com.revmob.app.id"
             android:value="522ddc39ceddc681b4000079" />
+        
+        <!-- MobFox -->
+        <meta-data
+            android:name="com.mobfox.publisher.id"
+            android:value="77a2aa08856c4960a6e609d5d8881d55" />
+        
+        <!-- mMedia -->
+        <meta-data
+            android:name="com.mmedia.app.id"
+            android:value="135201" />
+        
+         <!-- Chartboost -->
+        <meta-data
+            android:name="com.chartboost.app.id"
+            android:value="" />
+        
+        <meta-data
+            android:name="com.chartboost.signature"
+            android:value="" />
+        
+        
+        <!-- Config -->
+        <!-- Fullscreen/Interstitial distance -->
+        <meta-data
+            android:name="com.andlabs.util.ads.distance"
+            android:value="2" />
+        
     </application>
 
     <!-- Permissions -->

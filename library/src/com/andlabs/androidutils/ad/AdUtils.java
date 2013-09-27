@@ -7,6 +7,10 @@ import java.util.Map;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 
 import com.adsdk.sdk.Ad;
@@ -46,24 +50,25 @@ public class AdUtils {
 
     private static final String MOBFOX_REQUEST_URL = "http://my.mobfox.com/vrequest.php";
 
-    private static final String MOBFOX_PUBLISHER_ID = "77a2aa08856c4960a6e609d5d8881d55";
+    // Meta data keys
+    private static final String MOBFOX_PUBLISHER_ID = "com.mobfox.publisher.id";
+
+    private static final String MMEDIA_APP_ID = "com.mmedia.app.id";
+
+    private static final String CHARTBOOST_APP_ID = "com.chartboost.app.id";
+
+    private static final String CHARTBOOST_SIGNATURE = "com.chartboost.signature";
 
 
-    private static final String MMEDIA_APP_ID = "135201";
+    private static final String FULLSCREEN_DISTANCE = "com.andlabs.util.ads.distance";
 
 
-    private static final String CHARTBOOST_APP_ID = "";
-
-    private static final String CHARTBOOST_SIGNATURE = "";
-
-
+    // Ad states
     private static final int AD_NOT_INITIALIZED = 0;
 
     private static final int AD_INTERSTITIAL = 1;
 
     private static final int AD_BANNER = 2;
-
-    private static final int FULL_SCREEN_DISTANCE = 2;
 
 
     private Activity mActivity;
@@ -73,7 +78,6 @@ public class AdUtils {
 
 
     // Ad manager
-
     private AdManager mMobFoxManager;
 
     private RevMob mRevMobManager;
@@ -85,10 +89,24 @@ public class AdUtils {
     private Chartboost mChartboostManager;
 
 
+    // Publisher IDs
+    private String mMobfoxPublisherId;
+
+    private String mChartboostAppid;
+
+    private String mChartboostAppSignature;
+
+    private String mMediaAppId;
+
+    private int mFullscreenDistance;
+
+
+    // Loaded ads
     @SuppressLint("UseSparseArrays")
     private Map<Integer, Boolean> mLoadedAds = new HashMap<Integer, Boolean>();
 
 
+    // Singleton code
     private static AdUtils sInstance;
 
 
@@ -102,21 +120,32 @@ public class AdUtils {
 
 
     private AdUtils(Activity activity) {
+
         mActivity = activity;
+
+        // Init the manifest's meta data
+        initConfig();
 
         // Init RevMob
         mRevMobManager = RevMob.start(activity);
+
         // Init MobFox
-        mMobFoxManager = new AdManager(activity, MOBFOX_REQUEST_URL, MOBFOX_PUBLISHER_ID, false);
+        if (mMobfoxPublisherId != null) {
+            mMobFoxManager = new AdManager(activity, MOBFOX_REQUEST_URL, mMobfoxPublisherId, false);
+        }
 
-        // Millenial Media
-        mMMediaManager = new MMInterstitial(activity);
-        mMMediaManager.setApid(MMEDIA_APP_ID);
+        // Init Millenial Media
+        if (mMediaAppId != null) {
+            mMMediaManager = new MMInterstitial(activity);
+            mMMediaManager.setApid(mMediaAppId);
+        }
 
-        // Chartboost
-        mChartboostManager = Chartboost.sharedChartboost();
-        mChartboostManager.onCreate(activity, CHARTBOOST_APP_ID, CHARTBOOST_SIGNATURE, mChartboostListener);
-        mChartboostManager.onStart(activity);
+        // Init Chartboost
+        if (mChartboostAppid != null && mChartboostAppSignature != null) {
+            mChartboostManager = Chartboost.sharedChartboost();
+            mChartboostManager.onCreate(activity, mChartboostAppid, mChartboostAppSignature, mChartboostListener);
+            mChartboostManager.onStart(activity);
+        }
 
         // Init all ads as not loaded
         mLoadedAds.put(MOBFOX, false);
@@ -125,6 +154,50 @@ public class AdUtils {
         mLoadedAds.put(CHARTBOOST, false);
         mLoadedAds.put(MMEDIA, false);
         mLoadedAds.put(INNERACTIVE, false);
+    }
+
+
+    private void initConfig() {
+        final Bundle metaData = readMetaData();
+        setMetaData(metaData);
+    }
+
+
+    private Bundle readMetaData() {
+        try {
+            ApplicationInfo ai = mActivity.getPackageManager().getApplicationInfo(mActivity.getPackageName(),
+                    PackageManager.GET_META_DATA);
+
+            if (ai != null) {
+                final Bundle bundle = ai.metaData;
+                return bundle;
+            }
+
+        } catch (NameNotFoundException e) {
+            L.e(e);
+        }
+
+        return null;
+    }
+
+
+    private void setMetaData(Bundle metaData) {
+        // Ad provider meta data
+        // mobfox publisher id
+        mMobfoxPublisherId = metaData.getString(MOBFOX_PUBLISHER_ID);
+
+        // mmedia app id
+        mMediaAppId = metaData.getString(MMEDIA_APP_ID);
+
+        // chartboost app id
+        mChartboostAppid = metaData.getString(CHARTBOOST_APP_ID);
+
+        // chartboost signature
+        mChartboostAppSignature = metaData.getString(CHARTBOOST_SIGNATURE);
+
+        // Config meta data
+        // full screen distance
+        mFullscreenDistance = metaData.getInt(FULLSCREEN_DISTANCE);
     }
 
 
@@ -177,7 +250,7 @@ public class AdUtils {
     private boolean isFullscreenAllowed(int provider) {
         if (isFullScreenLoaded()) {
             mFullscreenCounter++;
-            if (mFullscreenCounter % FULL_SCREEN_DISTANCE == 0) {
+            if (mFullscreenCounter % mFullscreenDistance == 0) {
                 return true;
             } else {
                 return false;
@@ -204,13 +277,17 @@ public class AdUtils {
 
         switch (provider) {
             case MOBFOX:
-                mMobFoxManager.setListener(mMobFoxListener);
-                mMobFoxManager.requestAd();
+                if (mMobFoxManager != null) {
+                    mMobFoxManager.setListener(mMobFoxListener);
+                    mMobFoxManager.requestAd();
+                }
 
                 break;
 
             case REVMOB:
-                mRevMobFullscreen = mRevMobManager.createFullscreen(mActivity, mRevMobListener);
+                if (mRevMobFullscreen != null) {
+                    mRevMobFullscreen = mRevMobManager.createFullscreen(mActivity, mRevMobListener);
+                }
 
                 break;
 
@@ -219,13 +296,17 @@ public class AdUtils {
                 break;
 
             case CHARTBOOST:
-                mChartboostManager.cacheInterstitial();
+                if (mChartboostManager != null) {
+                    mChartboostManager.cacheInterstitial();
+                }
 
                 break;
 
             case MMEDIA:
-                mMMediaManager.setListener(mMMediaListener);
-                mMMediaManager.fetch();
+                if (mMMediaManager != null) {
+                    mMMediaManager.setListener(mMMediaListener);
+                    mMMediaManager.fetch();
+                }
 
                 break;
 
@@ -294,7 +375,7 @@ public class AdUtils {
                 }
             }
         } else { // one selected provider, check if already loaded
-            if(mLoadedAds.get(provider)) {
+            if (mLoadedAds.get(provider)) {
                 return provider;
             }
         }
